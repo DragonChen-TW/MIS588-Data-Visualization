@@ -2,5 +2,5 @@
 
 ## Example Solution for in-class assignments
 
-- [assignment1](/assign1/)
-- [assignment2](/assign2/)
+- [assignment1](assign1/)
+- [assignment2](assign2/)
