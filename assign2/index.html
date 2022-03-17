@@ -29,7 +29,7 @@
                 .attr('transform', `translate(${margin.left}, ${margin.top})`);
         
         // load csv
-        d3.csv('/data2.csv').then( function(data) {
+        d3.csv('./data2.csv').then( function(data) {
 
             const selectGroups = {
                 'Scale from 0 to Max': d => [0, d3.max(d)],
