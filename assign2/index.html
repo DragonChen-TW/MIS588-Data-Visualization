@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3.js playground</title>
+
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+</head>
+<body>
+    <!-- Initialize a select button -->
+    <select id="selectBtn"></select>
+
+    <div id="lineContainer"></div>
+
+    <script>
+        const margin = {top: 10, right: 100, bottom: 30, left: 45},
+            width = 460 - margin.left - margin.right,
+            height = 400 - margin.top - margin.bottom;
+
+        const svg = d3.select('#lineContainer')
+            .append('svg')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom)
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom)
+            .append('g')
+                .attr('transform', `translate(${margin.left}, ${margin.top})`);
+        
+        // load csv
+        d3.csv('/data2.csv').then( function(data) {
+
+            const selectGroups = {
+                'Scale from 0 to Max': d => [0, d3.max(d)],
+                'Scale with data range': d => [d3.min(d), d3.max(d)],
+            };
+            const groupKeys = Object.keys(selectGroups); // extract the name out
+
+            // add options to the button
+            d3.select('#selectBtn')
+                .selectAll('myOptions')
+                    .data(groupKeys)
+                .enter()
+                    .append('option')
+                .text(d => d)
+                .attr('value', d => d);
+            
+            // X axis -> it is a date format
+            const x = d3.scaleLinear()
+                .domain([0, d3.max(data.map(d => d.time))])
+                .range([0, width]);
+            svg.append('g')
+                .attr('transform', `translate(0, ${height})`)
+                .call(d3.axisBottom(x));
+            
+            // Y axis
+            const y = d3.scaleLinear()
+                .domain(
+                    selectGroups[groupKeys[0]](data.map(d => d.value))  // use the first group as default setting
+                )
+                .range([height, 0]);
+            const yAxis = svg.append('g');      // the visable element on the screen
+            yAxis.call(d3.axisLeft(y));         // call to draw the plot out
+
+            // line
+            const line = svg
+                .append('g')
+                .append('path')
+                .datum(data)
+                .attr('stroke', 'steelblue')
+                .style('stroke-width', 2)
+                .style('fill', 'none')
+                .attr('d', d3.line()
+                    .x(d => x(+d.time))
+                    .y(d => y(+d.value))
+                );
+
+            // points
+            const points = svg
+                .append('g')
+                .selectAll("dot")
+                .data(data)
+                .join("circle")
+                .attr("cx", d => x(d.time))
+                .attr("cy", d => y(d.value))
+                .attr("r", 3)
+                .attr('fill', 'steelblue');
+
+            // A function that update the chart
+            const update = selectedGroup => {
+                const d = data.map(dd => Number(dd.value));
+                const domain = selectGroups[selectedGroup](d);
+
+                console.log('domain', domain);
+                // call those drawing part again
+                y
+                    .domain(domain)
+                    .range([height, 0]);
+                yAxis
+                    .transition()
+                    .duration(1000)
+                    .call(d3.axisLeft(y));
+                
+                line
+                    .transition()
+                    .duration(1000)
+                        .attr('d', d3.line()
+                            .x(d => x(+d.time))
+                            .y(d => y(+d.value))
+                        );
+                points
+                    .transition()
+                    .duration(1000)
+                        .attr("cx", d => x(d.time))
+                        .attr("cy", d => y(d.value))
+            }
+
+            // When button is changed, run the updateChart function
+            d3.select('#selectBtn').on('change', function(event, d) {
+                // recover the option that has been chosen
+                const selectedOption = d3.select(this).property('value');
+                // run the updateChart function with this selected option
+                update(selectedOption);
+            });
+
+        });
+    </script>
+    
+    
+</body>
+</html>
